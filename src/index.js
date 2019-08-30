@@ -1,12 +1,20 @@
-const Koa = require("koa");
+import Koa from "koa";
+import Router from "koa-router";
+
+import api from "./api";
+
 const app = new Koa();
+const router = new Router();
 
 const PORT = 4000;
 
-app.use((ctx, next) => {
+router.get("/", ctx => {
   ctx.body = "Index Page";
-  next();
 });
+
+router.use("/api", api.routes());
+
+app.use(router.routes());
 
 app.listen(PORT, () => {
   console.log(`Server is listening to port ${PORT}`);
