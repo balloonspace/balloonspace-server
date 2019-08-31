@@ -5,6 +5,7 @@ import api from "./api";
 
 const app = new Koa();
 const router = new Router();
+const models = require("./database/models");
 
 const PORT = 4000;
 

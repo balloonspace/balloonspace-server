@@ -10,7 +10,9 @@
     "babel-preset-env": "^1.7.0",
     "koa": "^2.8.1",
     "koa-router": "^7.4.0",
-    "nodemon": "^1.19.1"
+    "mariadb": "^2.1.0",
+    "nodemon": "^1.19.1",
+    "sequelize": "^5.17.1"
   },
   "scripts": {
     "start": "babel-node src",
