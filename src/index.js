@@ -1,5 +1,6 @@
 import Koa from "koa";
 import Router from "koa-router";
+import KoaBody from "koa-body";
 
 import api from "./api";
 
@@ -15,6 +16,7 @@ router.get("/", ctx => {
 
 router.use("/api", api.routes());
 
+app.use(KoaBody());
 app.use(router.routes());
 
 app.listen(PORT, () => {

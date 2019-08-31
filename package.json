@@ -8,7 +8,9 @@
   "dependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
+    "joi": "^14.3.1",
     "koa": "^2.8.1",
+    "koa-body": "^4.1.1",
     "koa-router": "^7.4.0",
     "mariadb": "^2.1.0",
     "nodemon": "^1.19.1",
