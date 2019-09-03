@@ -8,7 +8,8 @@ module.exports = {
     dialect: "mariadb",
     dialectOptions: {
       timezone: "Etc/GMT-9"
-    }
+    },
+    logging: false
   },
   test: {
     username: "root",
@@ -19,7 +20,8 @@ module.exports = {
     dialect: "mariadb",
     dialectOptions: {
       timezone: "Etc/GMT-9"
-    }
+    },
+    logging: false
   },
   production: {
     username: "root",
@@ -30,6 +32,7 @@ module.exports = {
     dialect: "mariadb",
     dialectOptions: {
       timezone: "Etc/GMT-9"
-    }
+    },
+    logging: false
   }
 };

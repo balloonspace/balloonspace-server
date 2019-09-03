@@ -1,6 +1,8 @@
+import Crypto from "crypto";
 import Joi from "joi";
 
 import Models from "../../database/models";
+import * as jwt from "../../jwt";
 
 const { User } = Models;
 
@@ -27,31 +29,39 @@ export const signUp = async ctx => {
     return;
   }
 
-  let { user_id } = ctx.request.body;
-  let isExist;
+  let { user_id, user_pw, nickname } = ctx.request.body;
+  let is_exist;
 
   try {
-    isExist = await User.findOne({ where: { user_id } });
+    is_exist = await User.findOne({ where: { user_id } });
   } catch (error) {
     // Internal Server Error
     ctx.throw(500, error);
   }
 
-  let newUser;
+  const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
 
-  if (isExist) {
+  let new_user;
+  let signup_data = {
+    user_id,
+    nickname,
+    user_pw: hash.update(user_pw).digest("base64")
+  };
+
+  if (is_exist) {
     // Conflict
     ctx.status = 409;
     return;
   } else {
     try {
-      newUser = await User.create(ctx.request.body);
+      new_user = await User.create(signup_data);
     } catch (error) {
       ctx.throw(500, error);
     }
   }
 
-  ctx.body = newUser;
+  console.log(`SignUp: ${new_user.nickname}`);
+  ctx.body = new_user;
 };
 
 // POST /api/auth/signin
@@ -73,6 +83,8 @@ export const signIn = async ctx => {
     return;
   }
 
+  const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
+
   let { user_id, user_pw } = ctx.request.body;
   let user;
 
@@ -82,11 +94,20 @@ export const signIn = async ctx => {
     ctx.throw(500, error);
   }
 
-  if (!user || user.user_pw !== user_pw) {
+  if (!user || hash.update(user_pw).digest("base64") !== user.user_pw) {
     // Forbidden
     ctx.status = 403;
     return;
   }
 
-  ctx.body = user;
+  let token;
+
+  try {
+    token = await jwt.generateToken(user.dataValues);
+  } catch (error) {
+    ctx.throw(500, error);
+  }
+
+  console.log(`Login: ${user.nickname}`);
+  ctx.body = token;
 };
