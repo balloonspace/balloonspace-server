@@ -2,7 +2,7 @@ import Crypto from "crypto";
 import Joi from "joi";
 
 import Models from "../../database/models";
-import * as jwt from "../../jwt";
+import { generateToken } from "../../jwt";
 
 const { User } = Models;
 
@@ -25,11 +25,10 @@ export const signUp = async ctx => {
 
   if (vaild.error) {
     // Bad Request
-    ctx.status = 400;
-    return;
+    ctx.throw(400);
   }
 
-  let { user_id, user_pw, nickname } = ctx.request.body;
+  const { user_id, user_pw, nickname } = ctx.request.body;
   let is_exist;
 
   try {
@@ -42,7 +41,7 @@ export const signUp = async ctx => {
   const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
 
   let new_user;
-  let signup_data = {
+  const signup_data = {
     user_id,
     nickname,
     user_pw: hash.update(user_pw).digest("base64")
@@ -50,12 +49,12 @@ export const signUp = async ctx => {
 
   if (is_exist) {
     // Conflict
-    ctx.status = 409;
-    return;
+    ctx.throw(409);
   } else {
     try {
       new_user = await User.create(signup_data);
     } catch (error) {
+      // Internal Server Error
       ctx.throw(500, error);
     }
   }
@@ -79,32 +78,32 @@ export const signIn = async ctx => {
 
   if (vaild.error) {
     // Bad Request
-    ctx.status = 400;
-    return;
+    ctx.throw(400);
   }
 
   const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
 
-  let { user_id, user_pw } = ctx.request.body;
+  const { user_id, user_pw } = ctx.request.body;
   let user;
 
   try {
     user = await User.findOne({ where: { user_id } });
   } catch (error) {
+    // Internal Server Error
     ctx.throw(500, error);
   }
 
-  if (!user || hash.update(user_pw).digest("base64") !== user.user_pw) {
+  if (user === null || hash.update(user_pw).digest("base64") !== user.user_pw) {
     // Forbidden
-    ctx.status = 403;
-    return;
+    ctx.throw(403);
   }
 
   let token;
 
   try {
-    token = await jwt.generateToken(user.dataValues);
+    token = await generateToken(user.dataValues);
   } catch (error) {
+    // Internal Server Error
     ctx.throw(500, error);
   }
 
