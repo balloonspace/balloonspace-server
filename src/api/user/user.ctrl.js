@@ -3,6 +3,58 @@ import { decodeToken } from "../../jwt";
 
 const { User, Following } = Models;
 
+// GET /api/user/profile/:user_id
+export const getProfile = async ctx => {
+  const { user_id } = ctx.params;
+  let user;
+
+  try {
+    user = await User.findOne({
+      where: { user_id },
+      attributes: { exclude: "user_pw" }
+    });
+  } catch (error) {
+    ctx.throw(500, error);
+  }
+
+  ctx.body = user;
+};
+
+// POST /api/user/profile/:user_id
+export const editProfile = async ctx => {
+  const { token } = ctx.header;
+  const data = ctx.request.body;
+
+  try {
+    await checkRequestVaild(token, null);
+  } catch (error) {
+    ctx.throw(error);
+  }
+
+  let user;
+
+  try {
+    let decoded = await decodeToken(token);
+
+    user = await User.findOne({ where: { user_id: decoded.user_id } });
+  } catch (error) {
+    ctx.throw(500, error);
+  }
+
+  if (user === null) {
+    // Not Found
+    ctx.throw(404);
+  }
+
+  try {
+    ctx.body = await User.update(data, {
+      where: { user_id: user.user_id }
+    });
+  } catch (error) {
+    ctx.throw(500, error);
+  }
+};
+
 // POST /api/user/follow
 export const follow = async ctx => {
   const { token } = ctx.header;
