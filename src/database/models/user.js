@@ -22,5 +22,19 @@ export default (sequelize, DataTypes) => {
     }
   );
 
+  user.associate = models => {
+    user.hasMany(models.Following, {
+      foreignKey: "target_id",
+      sourceKey: "user_id",
+      onDelete: "cascade"
+    });
+
+    user.hasMany(models.Following, {
+      foreignKey: "follower_id",
+      sourceKey: "user_id",
+      onDelete: "cascade"
+    });
+  };
+
   return user;
 };

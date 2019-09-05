@@ -14,6 +14,7 @@ export const getProfile = async ctx => {
       attributes: { exclude: "user_pw" }
     });
   } catch (error) {
+    // Internal Server Error
     ctx.throw(500, error);
   }
 
@@ -38,6 +39,7 @@ export const editProfile = async ctx => {
 
     user = await User.findOne({ where: { user_id: decoded.user_id } });
   } catch (error) {
+    // Internal Server Error
     ctx.throw(500, error);
   }
 
@@ -51,6 +53,7 @@ export const editProfile = async ctx => {
       where: { user_id: user.user_id }
     });
   } catch (error) {
+    // Internal Server Error
     ctx.throw(500, error);
   }
 };
@@ -74,6 +77,7 @@ export const follow = async ctx => {
     follower = await User.findOne({ where: { user_id: decoded.user_id } });
     target = await User.findOne({ where: { user_id } });
   } catch (error) {
+    // Internal Server Error
     ctx.throw(500, error);
   }
 
@@ -126,6 +130,7 @@ export const unfollow = async ctx => {
     follower = await User.findOne({ where: { user_id: decoded.user_id } });
     target = await User.findOne({ where: { user_id } });
   } catch (error) {
+    // Internal Server Error
     ctx.throw(500, error);
   }
 
@@ -159,6 +164,40 @@ export const unfollow = async ctx => {
   }
 
   ctx.body = following;
+};
+
+// GET /api/user/leave
+export const leave = async ctx => {
+  const { token } = ctx.header;
+
+  try {
+    await checkRequestVaild(token, null);
+  } catch (error) {
+    ctx.throw(error);
+  }
+
+  let user;
+
+  try {
+    let decoded = await decodeToken(token);
+
+    user = await User.findOne({ where: { user_id: decoded.user_id } });
+  } catch (error) {
+    // Internal Server Error
+    ctx.throw(500, error);
+  }
+
+  if (user === null) {
+    // Not Found
+    ctx.throw(404);
+  }
+
+  try {
+    ctx.body = await User.destroy({ where: { user_id: user.user_id } });
+  } catch (error) {
+    // Internal Server Error
+    ctx.throw(500, error);
+  }
 };
 
 async function checkRequestVaild(token, user_id) {
