@@ -34,6 +34,18 @@ export default (sequelize, DataTypes) => {
       sourceKey: "user_id",
       onDelete: "cascade"
     });
+
+    user.hasMany(models.Blocking, {
+      foreignKey: "target_id",
+      sourceKey: "user_id",
+      onDelete: "cascade"
+    });
+
+    user.hasMany(models.Blocking, {
+      foreignKey: "user_id",
+      sourceKey: "user_id",
+      onDelete: "cascade"
+    });
   };
 
   return user;

@@ -1,7 +1,7 @@
 import Models from "../../database/models";
 import { decodeToken } from "../../jwt";
 
-const { User, Following } = Models;
+const { User, Following, Blocking } = Models;
 
 // GET /api/user/profile/:user_id
 export const getProfile = async ctx => {
@@ -35,17 +35,9 @@ export const editProfile = async ctx => {
   let user;
 
   try {
-    let decoded = await decodeToken(token);
-
-    user = await User.findOne({ where: { user_id: decoded.user_id } });
+    user = await findUser(token);
   } catch (error) {
-    // Internal Server Error
-    ctx.throw(500, error);
-  }
-
-  if (user === null) {
-    // Not Found
-    ctx.throw(404);
+    ctx.throw(error);
   }
 
   try {
@@ -143,9 +135,16 @@ export const unfollow = async ctx => {
   const target_id = target.user_id;
   const follower_id = follower.user_id;
 
-  const is_exist = await Following.findOne({
-    where: { target_id, follower_id }
-  });
+  let is_exist;
+
+  try {
+    is_exist = await Following.findOne({
+      where: { target_id, follower_id }
+    });
+  } catch (error) {
+    // Internal Server Error
+    ctx.throw(500, error);
+  }
 
   let following;
 
@@ -166,8 +165,8 @@ export const unfollow = async ctx => {
   ctx.body = following;
 };
 
-// GET /api/user/leave
-export const leave = async ctx => {
+// GET /api/user/remove
+export const remove = async ctx => {
   const { token } = ctx.header;
 
   try {
@@ -179,17 +178,9 @@ export const leave = async ctx => {
   let user;
 
   try {
-    let decoded = await decodeToken(token);
-
-    user = await User.findOne({ where: { user_id: decoded.user_id } });
+    user = await findUser(token);
   } catch (error) {
-    // Internal Server Error
-    ctx.throw(500, error);
-  }
-
-  if (user === null) {
-    // Not Found
-    ctx.throw(404);
+    ctx.throw(error);
   }
 
   try {
@@ -198,6 +189,134 @@ export const leave = async ctx => {
     // Internal Server Error
     ctx.throw(500, error);
   }
+};
+
+// POST /api/user/block
+export const block = async ctx => {
+  const { token } = ctx.header;
+  const target_id = ctx.request.body.user_id;
+
+  try {
+    await checkRequestVaild(token, target_id);
+  } catch (error) {
+    ctx.throw(error);
+  }
+
+  let user, target;
+
+  try {
+    let decoded = await decodeToken(token);
+
+    user = await User.findOne({ where: { user_id: decoded.user_id } });
+    target = await User.findOne({ where: { user_id: target_id } });
+  } catch (error) {
+    // Internal Server Error
+    ctx.throw(500, error);
+  }
+
+  try {
+    await checkUserVaild(user, target);
+  } catch (error) {
+    ctx.throw(error);
+  }
+
+  let is_exist;
+
+  try {
+    is_exist = await Blocking.findOne({
+      where: {
+        target_id: target.user_id,
+        user_id: user.user_id
+      }
+    });
+  } catch (error) {
+    // Internal Server Error
+    ctx.throw(500, error);
+  }
+
+  let new_blocking;
+
+  if (is_exist) {
+    // Conflict
+    ctx.throw(409);
+  } else {
+    try {
+      new_blocking = await Blocking.create({
+        target_id: target.user_id,
+        user_id: user.user_id
+      });
+    } catch (error) {
+      // Internal Server Error
+      ctx.throw(500, error);
+    }
+  }
+
+  ctx.body = new_blocking;
+};
+
+// POST /api/user/unblock
+export const unblock = async ctx => {
+  const { token } = ctx.header;
+  const target_id = ctx.request.body.user_id;
+
+  try {
+    await checkRequestVaild(token, target_id);
+  } catch (error) {
+    ctx.throw(error);
+  }
+
+  let user, target;
+
+  try {
+    let decoded = await decodeToken(token);
+
+    user = await User.findOne({ where: { user_id: decoded.user_id } });
+    target = await User.findOne({ where: { user_id: target_id } });
+  } catch (error) {
+    // Internal Server Error
+    ctx.throw(500, error);
+  }
+
+  try {
+    await checkUserVaild(target, user);
+  } catch (error) {
+    ctx.throw(error);
+  }
+
+  let is_exist;
+
+  try {
+    is_exist = await Blocking.findOne({
+      where: {
+        target_id: target.user_id,
+        user_id: user.user_id
+      }
+    });
+  } catch (error) {
+    // Internal Server Error
+    ctx.throw(500, error);
+  }
+
+  let blocking;
+
+  if (is_exist === null) {
+    // Not Found
+    ctx.throw(404);
+  } else {
+    try {
+      blocking = await Blocking.destroy({
+        where: {
+          target_id: target.user_id,
+          user_id: user.user_id
+        }
+      });
+    } catch (error) {
+      // Internal Server Error
+      ctx.throw(500, error);
+    }
+  }
+
+  ctx.body = blocking;
 };
 
 async function checkRequestVaild(token, user_id) {
@@ -218,4 +337,24 @@ async function checkUserVaild(target, follower) {
     // Bad Request
     throw 400;
   }
+}
+
+async function findUser(token) {
+  let user;
+
+  try {
+    let decoded = await decodeToken(token);
+
+    user = await User.findOne({ where: { user_id: decoded.user_id } });
+  } catch (error) {
+    // Internal Server Error
+    throw 500;
+  }
+
+  if (user === null) {
+    // Not Found
+    throw 404;
+  }
+
+  return user;
 }
