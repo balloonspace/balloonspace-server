@@ -1,3 +1,4 @@
+import Crypto from "crypto";
 import Models from "../../database/models";
 import { decodeToken } from "../../jwt";
 
@@ -38,6 +39,11 @@ export const editProfile = async ctx => {
     user = await findUser(token);
   } catch (error) {
     ctx.throw(error);
+  }
+
+  if (data.hasOwnProperty("user_pw")) {
+    const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
+    data.user_pw = hash.update(data.user_pw).digest("base64");
   }
 
   try {
