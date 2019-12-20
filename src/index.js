@@ -20,6 +20,7 @@ router.use("/api", api.routes());
 
 app.use(KoaBody());
 app.use(router.routes());
+app.use(router.allowedMethods({throw: true}));
 
 app.listen(PORT, () => {
   console.log(`Server is listening to http://localhost:${PORT}`);
