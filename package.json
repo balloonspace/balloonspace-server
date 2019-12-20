@@ -16,10 +16,18 @@
     "koa-router": "^7.4.0",
     "mariadb": "^2.1.0",
     "nodemon": "^1.19.1",
-    "sequelize": "^5.17.1"
+    "sequelize": "^5.17.1",
+    "jest": "^24.9.0"
+  },
+  "devDependencies": {
+    "supertest": "^4.0.2"
+  },
+  "jest": {
+    "testEnvironment": "node"
   },
   "scripts": {
     "start": "babel-node src",
-    "start:dev": "nodemon --exec babel-node src"
+    "start:dev": "nodemon --exec babel-node src",
+    "test": "jest"
   }
 }
