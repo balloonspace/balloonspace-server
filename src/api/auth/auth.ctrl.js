@@ -34,31 +34,16 @@ export const signIn = async ctx => {
     .catch((err) => ctx.throw(err));
 
   const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
-
+  const hashed_user_pw = hash.update(user_pw).digest("base64");
   
-  let user;
+  let user = await User.findOne({ where: { user_id } });
+  
+  const userIdNotFound = (user === null);
+  const pwNotCorrect = (hashed_user_pw !== user.user_pw);
+  if (userIdNotFound || pwNotCorrect) ctx.throw(403);
 
-  try {
-    user = await User.findOne({ where: { user_id } });
-  } catch (error) {
-    // Internal Server Error
-    ctx.throw(500, error);
-  }
-
-  if (user === null || hash.update(user_pw).digest("base64") !== user.user_pw) {
-    // Forbidden
-    ctx.throw(403);
-  }
-
-  let token;
-
-  try {
-    token = await generateToken(user.dataValues);
-  } catch (error) {
-    // Internal Server Error
-    ctx.throw(500, error);
-  }
-
+  let token = await generateToken(user.dataValues);
+  
   console.log(`Login: ${user.nickname}`);
   ctx.body = token;
 };
