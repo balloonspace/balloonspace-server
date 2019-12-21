@@ -8,25 +8,8 @@ const { User } = Models;
 
 // POST /api/auth/signup
 export const signUp = async ctx => {
-  const vaild = Joi.object({
-    user_id: Joi.string()
-      .required()
-      .min(2)
-      .max(30),
-    user_pw: Joi.string()
-      .required()
-      .min(2)
-      .max(50),
-    nickname: Joi.string()
-      .required()
-      .min(2)
-      .max(20)
-  }).validate(ctx.request.body);
-
-  if (vaild.error) {
-    // Bad Request
-    ctx.throw(400);
-  }
+  await checkValidSignUpData(ctx.request.body)
+    .catch((err) => ctx.throw(err));
 
   const { user_id, user_pw, nickname } = ctx.request.body;
   let is_exist;
@@ -65,21 +48,8 @@ export const signUp = async ctx => {
 
 // POST /api/auth/signin
 export const signIn = async ctx => {
-  const vaild = Joi.object({
-    user_id: Joi.string()
-      .required()
-      .min(2)
-      .max(30),
-    user_pw: Joi.string()
-      .required()
-      .min(2)
-      .max(50)
-  }).validate(ctx.request.body);
-
-  if (vaild.error) {
-    // Bad Request
-    ctx.throw(400);
-  }
+  await checkValidSignInData(ctx.request.body)
+    .catch((err) => ctx.throw(err));
 
   const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
 
@@ -109,4 +79,40 @@ export const signIn = async ctx => {
 
   console.log(`Login: ${user.nickname}`);
   ctx.body = token;
+};
+
+async function checkValidSignUpData (userData) {
+  const valid = Joi.object({
+    user_id: Joi.string()
+      .required()
+      .min(2)
+      .max(30),
+    user_pw: Joi.string()
+      .required()
+      .min(2)
+      .max(50),
+    nickname: Joi.string()
+      .required()
+      .min(2)
+      .max(20)
+  })
+  .validate(userData);
+
+  if (valid.error) throw 400;
+};
+
+async function checkValidSignInData (userData) {
+  const valid = Joi.object({
+    user_id: Joi.string()
+      .required()
+      .min(2)
+      .max(30),
+    user_pw: Joi.string()
+      .required()
+      .min(2)
+      .max(50)
+  })
+  .validate(userData);
+
+  if (valid.error) throw 400;
 };
