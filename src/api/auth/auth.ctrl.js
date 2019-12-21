@@ -17,21 +17,10 @@ export const signUp = async ctx => {
   if (userIdAleadyExist) ctx.throw(409);
     
   const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
+  const hashed_user_pw = hash.update(user_pw).digest("base64");
 
-  let new_user;
-  const signup_data = {
-    user_id,
-    nickname,
-    user_pw: hash.update(user_pw).digest("base64")
-  };
-
-  try {
-    new_user = await User.create(signup_data);
-  } catch (error) {
-    // Internal Server Error
-    ctx.throw(500, error);
-  }
-
+  const signup_data = { user_id, nickname, hashed_user_pw };
+  let new_user = await User.create(signup_data);
 
   console.log(`SignUp: ${new_user.nickname}`);
   ctx.body = new_user;
@@ -40,7 +29,7 @@ export const signUp = async ctx => {
 // POST /api/auth/signin
 export const signIn = async ctx => {
   const { user_id, user_pw } = ctx.request.body;
-  
+
   await checkValidSignInData(ctx.request.body)
     .catch((err) => ctx.throw(err));
 
