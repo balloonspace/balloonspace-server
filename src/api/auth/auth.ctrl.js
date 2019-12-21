@@ -19,7 +19,7 @@ export const signUp = async ctx => {
   const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
   const hashed_user_pw = hash.update(user_pw).digest("base64");
 
-  const signup_data = { user_id, nickname, hashed_user_pw };
+  const signup_data = { user_id, nickname, user_pw: hashed_user_pw };
   let new_user = await User.create(signup_data);
 
   console.log(`SignUp: ${new_user.nickname}`);
@@ -33,10 +33,9 @@ export const signIn = async ctx => {
   await checkValidSignInData(ctx.request.body)
     .catch((err) => ctx.throw(err));
 
+  let user = await User.findOne({ where: { user_id } });
   const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
   const hashed_user_pw = hash.update(user_pw).digest("base64");
-  
-  let user = await User.findOne({ where: { user_id } });
   
   const userIdNotFound = (user === null);
   const pwNotCorrect = (hashed_user_pw !== user.user_pw);
@@ -83,3 +82,5 @@ async function checkValidSignInData (userData) {
 
   if (valid.error) throw 400;
 };
+
+async function getHashedPassword (user_pw) {};
