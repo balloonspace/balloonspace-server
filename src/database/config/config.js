@@ -4,7 +4,7 @@ module.exports = {
     password: "root",
     database: "balloonspace_dev",
     host: "127.0.0.1",
-    port: "3307",
+    port: "3306",
     dialect: "mariadb",
     dialectOptions: {
       timezone: "Etc/GMT-9"
@@ -16,7 +16,7 @@ module.exports = {
     password: "root",
     database: "balloonspace_dev",
     host: "127.0.0.1",
-    port: "3307",
+    port: "3306",
     dialect: "mariadb",
     dialectOptions: {
       timezone: "Etc/GMT-9"
@@ -28,7 +28,7 @@ module.exports = {
     password: "root",
     database: "balloonspace",
     host: "127.0.0.1",
-    port: "3307",
+    port: "3306",
     dialect: "mariadb",
     dialectOptions: {
       timezone: "Etc/GMT-9"
