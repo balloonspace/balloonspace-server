@@ -8,19 +8,14 @@ const { User } = Models;
 
 // POST /api/auth/signup
 export const signUp = async ctx => {
-  await checkValidSignUpData(ctx.request.body)
-    .catch((err) => ctx.throw(err));
-
   const { user_id, user_pw, nickname } = ctx.request.body;
-  let is_exist;
 
-  try {
-    is_exist = await User.findOne({ where: { user_id } });
-  } catch (error) {
-    // Internal Server Error
-    ctx.throw(500, error);
-  }
+  await checkValidSignUpData(ctx.request.body)
+    .catch( (err) => ctx.throw(err) );
 
+  let userIdAleadyExist = await User.findOne({ where: { user_id } })
+  if (userIdAleadyExist) ctx.throw(409);
+    
   const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
 
   let new_user;
@@ -30,17 +25,13 @@ export const signUp = async ctx => {
     user_pw: hash.update(user_pw).digest("base64")
   };
 
-  if (is_exist) {
-    // Conflict
-    ctx.throw(409);
-  } else {
-    try {
-      new_user = await User.create(signup_data);
-    } catch (error) {
-      // Internal Server Error
-      ctx.throw(500, error);
-    }
+  try {
+    new_user = await User.create(signup_data);
+  } catch (error) {
+    // Internal Server Error
+    ctx.throw(500, error);
   }
+
 
   console.log(`SignUp: ${new_user.nickname}`);
   ctx.body = new_user;
@@ -48,12 +39,14 @@ export const signUp = async ctx => {
 
 // POST /api/auth/signin
 export const signIn = async ctx => {
+  const { user_id, user_pw } = ctx.request.body;
+  
   await checkValidSignInData(ctx.request.body)
     .catch((err) => ctx.throw(err));
 
   const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
 
-  const { user_id, user_pw } = ctx.request.body;
+  
   let user;
 
   try {
