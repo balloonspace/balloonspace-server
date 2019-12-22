@@ -7,18 +7,11 @@ const { User, Following, Blocking } = Models;
 // GET /api/user/profile/:user_id
 export const getProfile = async ctx => {
   const { user_id } = ctx.params;
-  let user;
-
-  try {
-    user = await User.findOne({
-      where: { user_id },
-      attributes: { exclude: "user_pw" }
-    });
-  } catch (error) {
-    // Internal Server Error
-    ctx.throw(500, error);
-  }
-
+  let user = await User.findOne({
+    where: { user_id },
+    attributes: { exclude: "user_pw" }
+  });
+  
   ctx.body = user;
 };
 
