@@ -1,6 +1,7 @@
 import Crypto from "crypto";
 import Models from "../../database/models";
 import { decodeToken } from "../../jwt";
+import { decode } from "punycode";
 
 const { User, Following, Blocking } = Models;
 
@@ -39,52 +40,25 @@ export const editProfile = async ctx => {
 export const follow = async ctx => {
   const { token } = ctx.header;
   const { user_id } = ctx.request.body;
-  
-  try { 
-    await checkRequestVaild(token, user_id);
-  } catch (error) {
-    ctx.throw(error);
-  }
 
-  let follower, target;
+  let new_following;
 
-  try {
-    let decoded = await decodeToken(token);
+  await checkRequestVaild(token, user_id)
+    .catch((err) => ctx.throw(err));
 
-    follower = await User.findOne({ where: { user_id: decoded.user_id } });
-    target = await User.findOne({ where: { user_id } });
-  } catch (error) {
-    // Internal Server Error
-    ctx.throw(500, error);
-  }
+  let follower = await findUser(token);
+  let target = await User.findOne({ where: { user_id } });
 
-  try {
-    await checkUserVaild(target, follower);
-  } catch (error) {
-    ctx.throw(error);
-  }
+  await checkUserVaild(target, follower)
+    .catch((err) => ctx.throw(err));
 
   const target_id = target.user_id;
   const follower_id = follower.user_id;
 
-  const is_exist = await Following.findOne({
-    where: { target_id, follower_id }
-  });
+  await checkIdIsAlreadyExist(target_id, follower_id)
+    .catch((err) => ctx.throw(err));
 
-  let new_following;
-
-  if (is_exist) {
-    // Conflict
-    ctx.throw(409);
-  } else {
-    try {
-      new_following = await Following.create({ target_id, follower_id });
-    } catch (error) {
-      // Internal Server Error
-      ctx.throw(500, error);
-    }
-  }
-
+  new_following = await Following.create({ target_id, follower_id });
   ctx.body = new_following;
 };
 
@@ -310,19 +284,22 @@ async function checkRequestVaild(token, user_id) {
 };
 
 async function checkUserVaild(target, follower) {
-  if (target === null) {
-    // Not Found
-    throw 404;
-  } else if (follower.user_id === target.user_id) {
-    // Bad Request
-    throw 400;
-  }
+  if (target === null) throw 404;
+  if (follower.user_id === target.user_id) throw 400;
 };
 
 async function findUser(token) {
   let decoded = await decodeToken(token);
   let user = await User.findOne({ where: { user_id: decoded.user_id } });
 
-  if (user === null) throw 404;
+  if (user === null) { throw 404; }
   return user;
 };
+
+async function checkIdIsAlreadyExist(target_id, follower_id) {
+  const idIsAlreadyExist = await Following.findOne({
+    where: { target_id, follower_id }
+  });
+
+  if (idIsAlreadyExist) throw 409;
+}
