@@ -20,33 +20,15 @@ export const editProfile = async ctx => {
   const { token } = ctx.header;
   const data = ctx.request.body;
 
-  try {
-    await checkRequestVaild(token, null);
-  } catch (error) {
-    ctx.throw(error);
-  }
+  await checkRequestVaild(token, null);
+  let user = await findUser(token);
 
-  let user;
+  let updatedData = await User.update(data, {
+    where: { user_id: user.user_id }
+  });
 
-  try {
-    user = await findUser(token);
-  } catch (error) {
-    ctx.throw(error);
-  }
-
-  if (data.hasOwnProperty("user_pw")) {
-    const hash = Crypto.createHmac("sha512", process.env.HASH_SECRET);
-    data.user_pw = hash.update(data.user_pw).digest("base64");
-  }
-
-  try {
-    ctx.body = await User.update(data, {
-      where: { user_id: user.user_id }
-    });
-  } catch (error) {
-    // Internal Server Error
-    ctx.throw(500, error);
-  }
+  ctx.body = updatedData;
+  
 };
 
 // POST /api/user/follow
