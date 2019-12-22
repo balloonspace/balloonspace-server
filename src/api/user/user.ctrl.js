@@ -301,14 +301,9 @@ export const unblock = async ctx => {
 };
 
 async function checkRequestVaild(token, user_id) {
-  if (token === undefined) {
-    // Unauthorized
-    throw 401;
-  } else if (user_id === undefined) {
-    // Bad Request
-    throw 400;
-  }
-}
+  if (token === undefined) throw 401;
+  if (user_id === undefined) throw 400;
+};
 
 async function checkUserVaild(target, follower) {
   if (target === null) {
@@ -318,24 +313,12 @@ async function checkUserVaild(target, follower) {
     // Bad Request
     throw 400;
   }
-}
+};
 
 async function findUser(token) {
-  let user;
+  let decoded = await decodeToken(token);
+  let user = await User.findOne({ where: { user_id: decoded.user_id } });
 
-  try {
-    let decoded = await decodeToken(token);
-
-    user = await User.findOne({ where: { user_id: decoded.user_id } });
-  } catch (error) {
-    // Internal Server Error
-    throw 500;
-  }
-
-  if (user === null) {
-    // Not Found
-    throw 404;
-  }
-
+  if (user === null) throw 404;
   return user;
-}
+};
