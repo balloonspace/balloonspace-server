@@ -302,5 +302,6 @@ async function checkIdIsAlreadyExist(target_id, follower_id) {
     where: { target_id, follower_id }
   });
 
+  if (idIsAlreadyExist === null) throw 404;
   if (idIsAlreadyExist) throw 409;
-}
+};
