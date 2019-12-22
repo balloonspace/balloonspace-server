@@ -40,23 +40,24 @@ export const editProfile = async ctx => {
 export const follow = async ctx => {
   const { token } = ctx.header;
   const { user_id } = ctx.request.body;
-
   let new_following;
+  let target_id, follower_id;
 
-  await checkRequestVaild(token, user_id)
-    .catch((err) => ctx.throw(err));
+  try{
+    await checkRequestVaild(token, user_id);
 
-  let follower = await findUser(token);
-  let target = await User.findOne({ where: { user_id } });
+    let follower = await findUser(token);
+    let target = await User.findOne({ where: { user_id } });
 
-  await checkUserVaild(target, follower)
-    .catch((err) => ctx.throw(err));
+    await checkUserVaild(target, follower);
 
-  const target_id = target.user_id;
-  const follower_id = follower.user_id;
+    target_id = target.user_id;
+    follower_id = follower.user_id;
 
-  await checkIdIsAlreadyExist(target_id, follower_id)
-    .catch((err) => ctx.throw(err));
+    await checkIdIsAlreadyExist(target_id, follower_id);
+  } catch (err){
+    ctx.throw(err);
+  }
 
   new_following = await Following.create({ target_id, follower_id });
   ctx.body = new_following;
@@ -292,7 +293,7 @@ async function findUser(token) {
   let decoded = await decodeToken(token);
   let user = await User.findOne({ where: { user_id: decoded.user_id } });
 
-  if (user === null) { throw 404; }
+  if (user === null) throw 404;
   return user;
 };
 
