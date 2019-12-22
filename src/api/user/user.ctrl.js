@@ -19,24 +19,28 @@ export const getProfile = async ctx => {
 export const editProfile = async ctx => {
   const { token } = ctx.header;
   const data = ctx.request.body;
+  let updatedData;
 
-  await checkRequestVaild(token, null);
-  let user = await findUser(token);
+  try {
+    await checkRequestVaild(token, null)
+    let user = await findUser(token);
 
-  let updatedData = await User.update(data, {
-    where: { user_id: user.user_id }
-  });
+    updatedData = await User.update(data, {
+      where: { user_id: user.user_id }
+    });
+  } catch (err) {
+    ctx.throw(err);
+  }
 
   ctx.body = updatedData;
-  
 };
 
 // POST /api/user/follow
 export const follow = async ctx => {
   const { token } = ctx.header;
   const { user_id } = ctx.request.body;
-
-  try {
+  
+  try { 
     await checkRequestVaild(token, user_id);
   } catch (error) {
     ctx.throw(error);
